@@ -2,7 +2,7 @@
 点击屏幕中央的Hello World即会从底部弹出菜单，菜单的数量不限
 
 #Demo
-![image](http://github.com/fangdawei/AnimMenu/images/demo.gif)
+![image](http://github.com/fangdawei/AnimMenu/blob/master/images/demo.gif)
 
 
 
