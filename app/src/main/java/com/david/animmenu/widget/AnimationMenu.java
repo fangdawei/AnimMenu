@@ -3,6 +3,7 @@ package com.david.animmenu.widget;
 import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.drawable.ColorDrawable;
@@ -30,7 +31,7 @@ public class AnimationMenu implements View.OnClickListener {
   private boolean toRefresh;
   private boolean canDismiss;
   private DismissListenPopupWindow popupWindow;
-  private Context context;
+  private Activity activity;
   private int duration = 500;
   private int step = 150;
   private Interpolator interpolator = new LinearInterpolator();
@@ -38,8 +39,8 @@ public class AnimationMenu implements View.OnClickListener {
   private int background = 0x88000000;
   private boolean isAnimationPlaying = false;
 
-  public AnimationMenu(Context context) {
-    this.context = context;
+  public AnimationMenu(Activity activity) {
+    this.activity = activity;
     this.toRefresh = true;
   }
 
@@ -72,8 +73,8 @@ public class AnimationMenu implements View.OnClickListener {
 
   private void createView() {
     int itemCount = menuItemList.size();
-    RelativeLayout root = new RelativeLayout(context);
-    Resources res = context.getResources();
+    RelativeLayout root = new RelativeLayout(activity);
+    Resources res = activity.getResources();
     int screenWidth = res.getDisplayMetrics().widthPixels;
     int width = itemCount != 0 ? screenWidth / itemCount : screenWidth;
     View leftView = null;
@@ -114,6 +115,7 @@ public class AnimationMenu implements View.OnClickListener {
     popupWindow.setFocusable(true);
     popupWindow.setOutsideTouchable(true);
     popupWindow.setBackgroundDrawable(new ColorDrawable(background));
+    popupWindow.setClippingEnabled(false);
     popupWindow.setDismissListener(new DismissListenPopupWindow.DismissListener() {
       @Override public boolean preDismiss() {
         if (!canDismiss) {//动画未播放，暂时不Dismiss
@@ -130,7 +132,7 @@ public class AnimationMenu implements View.OnClickListener {
     });
   }
 
-  public void menuShow(View location) {
+  public void menuShow() {
     if (isAnimationPlaying) {
       return;
     }
@@ -138,7 +140,7 @@ public class AnimationMenu implements View.OnClickListener {
       createView();
       toRefresh = false;
     }
-    popupWindow.showAtLocation(location, Gravity.NO_GRAVITY, 0, 0);
+    popupWindow.showAtLocation(activity.getWindow().getDecorView(), Gravity.NO_GRAVITY, 0, -0);
     isAnimationPlaying = true;
     for (int i = 0; i < menuItemList.size(); i++) {
       MenuItem item = menuItemList.get(i);
@@ -174,7 +176,7 @@ public class AnimationMenu implements View.OnClickListener {
   private void animShowMenuItem(final MenuItem item, long timeDelay, int dur, Animator.AnimatorListener listener) {
     ObjectAnimator oaContent = ObjectAnimator.ofFloat(item.contentView, "alpha", 0f, 1f);
     float current = item.root.getTranslationY();
-    float screenHeight = context.getResources().getDisplayMetrics().heightPixels;
+    float screenHeight = activity.getResources().getDisplayMetrics().heightPixels;
     ObjectAnimator oaRoot = ObjectAnimator.ofFloat(item.root, "translationY", current, current - screenHeight / 2);
     AnimatorSet set = new AnimatorSet();
     set.playTogether(oaContent, oaRoot);
@@ -227,7 +229,7 @@ public class AnimationMenu implements View.OnClickListener {
   private void animHideMenuItem(final MenuItem item, long timeDelay, int dur, Animator.AnimatorListener listener) {
     ObjectAnimator oaContent = ObjectAnimator.ofFloat(item.contentView, "alpha", 1f, 0f);
     float current = item.root.getTranslationY();
-    float screenHeight = context.getResources().getDisplayMetrics().heightPixels;
+    float screenHeight = activity.getResources().getDisplayMetrics().heightPixels;
     ObjectAnimator oaRoot = ObjectAnimator.ofFloat(item.root, "translationY", current, current + screenHeight / 2);
     AnimatorSet set = new AnimatorSet();
     set.playTogether(oaContent, oaRoot);
