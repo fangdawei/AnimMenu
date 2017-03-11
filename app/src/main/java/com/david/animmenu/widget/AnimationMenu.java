@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
+import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -140,7 +141,7 @@ public class AnimationMenu implements View.OnClickListener {
       createView();
       toRefresh = false;
     }
-    popupWindow.showAtLocation(activity.getWindow().getDecorView(), Gravity.NO_GRAVITY, 0, -0);
+    popupWindow.showAtLocation(activity.getWindow().getDecorView(), Gravity.NO_GRAVITY, 0, 0);
     isAnimationPlaying = true;
     for (int i = 0; i < menuItemList.size(); i++) {
       MenuItem item = menuItemList.get(i);
@@ -177,7 +178,8 @@ public class AnimationMenu implements View.OnClickListener {
     ObjectAnimator oaContent = ObjectAnimator.ofFloat(item.contentView, "alpha", 0f, 1f);
     float current = item.root.getTranslationY();
     float screenHeight = activity.getResources().getDisplayMetrics().heightPixels;
-    ObjectAnimator oaRoot = ObjectAnimator.ofFloat(item.root, "translationY", current, current - screenHeight / 2);
+    float height = item.root.getHeight();
+    ObjectAnimator oaRoot = ObjectAnimator.ofFloat(item.root, "translationY", current, current - screenHeight * 2 / 3);
     AnimatorSet set = new AnimatorSet();
     set.playTogether(oaContent, oaRoot);
     if (listener != null) {
@@ -230,7 +232,7 @@ public class AnimationMenu implements View.OnClickListener {
     ObjectAnimator oaContent = ObjectAnimator.ofFloat(item.contentView, "alpha", 1f, 0f);
     float current = item.root.getTranslationY();
     float screenHeight = activity.getResources().getDisplayMetrics().heightPixels;
-    ObjectAnimator oaRoot = ObjectAnimator.ofFloat(item.root, "translationY", current, current + screenHeight / 2);
+    ObjectAnimator oaRoot = ObjectAnimator.ofFloat(item.root, "translationY", current, current + screenHeight * 2 / 3);
     AnimatorSet set = new AnimatorSet();
     set.playTogether(oaContent, oaRoot);
     if (listener != null) {
@@ -265,6 +267,18 @@ public class AnimationMenu implements View.OnClickListener {
       root = new RelativeLayout(context);
       root.setId(MenuItem.generateViewId());
       contentView = imageView;
+      root.addView(contentView);
+      RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) contentView.getLayoutParams();
+      params.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+      params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+      params.addRule(RelativeLayout.CENTER_IN_PARENT);
+      contentView.setLayoutParams(params);
+    }
+
+    public MenuItem(Context context, View view) {
+      root = new RelativeLayout(context);
+      root.setId(MenuItem.generateViewId());
+      contentView = view;
       root.addView(contentView);
       RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) contentView.getLayoutParams();
       params.width = ViewGroup.LayoutParams.WRAP_CONTENT;
