@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class AnimationMenu implements View.OnClickListener {
 
+  private static final AtomicInteger sNextGeneratedId = new AtomicInteger(1);
   private List<MenuItem> menuItemList = new ArrayList<>();
   private boolean toRefresh;
   private boolean canDismiss;
@@ -39,6 +40,7 @@ public class AnimationMenu implements View.OnClickListener {
   private MenuOnSelectedListener menuOnSelectedListener;
   private int background = 0x88000000;
   private boolean isAnimationPlaying = false;
+  private RelativeLayout root;
 
   public AnimationMenu(Activity activity) {
     this.activity = activity;
@@ -74,7 +76,9 @@ public class AnimationMenu implements View.OnClickListener {
 
   private void createView() {
     int itemCount = menuItemList.size();
-    RelativeLayout root = new RelativeLayout(activity);
+    root = new RelativeLayout(activity);
+    root.setId(generateViewId());
+    root.setOnClickListener(this);
     Resources res = activity.getResources();
     int screenWidth = res.getDisplayMetrics().widthPixels;
     int width = itemCount != 0 ? screenWidth / itemCount : screenWidth;
@@ -244,20 +248,43 @@ public class AnimationMenu implements View.OnClickListener {
     set.start();
   }
 
-  @Override public void onClick(View v) {
-    Integer index = (Integer) v.getTag();
-    if (index != null) {
-      MenuItem item = menuItemList.get(index);
-      if (menuOnSelectedListener != null) {
-        menuOnSelectedListener.onMenuSelected(item, index);
+  /**
+   * 动态生成View ID
+   */
+  public static int generateViewId() {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1) {
+      for (; ; ) {
+        final int result = sNextGeneratedId.get();
+        // aapt-generated IDs have the high byte nonzero; clamp to the range under that.
+        int newValue = result + 1;
+        if (newValue > 0x00FFFFFF) newValue = 1; // Roll over to 1, not 0.
+        if (sNextGeneratedId.compareAndSet(result, newValue)) {
+          return result;
+        }
       }
+    } else {
+      return View.generateViewId();
+    }
+  }
+
+  @Override public void onClick(View v) {
+    if(v.getId() == root.getId()){
       popupWindow.dismiss();
+    } else {
+      Integer index = (Integer) v.getTag();
+      if (index != null) {
+        MenuItem item = menuItemList.get(index);
+        if (menuOnSelectedListener != null) {
+          menuOnSelectedListener.onMenuSelected(item, index);
+        }
+        popupWindow.dismiss();
+      }
     }
   }
 
   public static class MenuItem {
 
-    private static final AtomicInteger sNextGeneratedId = new AtomicInteger(1);
+
     private View contentView;
     private RelativeLayout root;
 
@@ -265,7 +292,7 @@ public class AnimationMenu implements View.OnClickListener {
       ImageView imageView = new ImageView(context);
       imageView.setImageResource(imageResourceId);
       root = new RelativeLayout(context);
-      root.setId(MenuItem.generateViewId());
+      root.setId(generateViewId());
       contentView = imageView;
       root.addView(contentView);
       RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) contentView.getLayoutParams();
@@ -277,7 +304,7 @@ public class AnimationMenu implements View.OnClickListener {
 
     public MenuItem(Context context, View view) {
       root = new RelativeLayout(context);
-      root.setId(MenuItem.generateViewId());
+      root.setId(generateViewId());
       contentView = view;
       root.addView(contentView);
       RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) contentView.getLayoutParams();
@@ -285,25 +312,6 @@ public class AnimationMenu implements View.OnClickListener {
       params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
       params.addRule(RelativeLayout.CENTER_IN_PARENT);
       contentView.setLayoutParams(params);
-    }
-
-    /**
-     * 动态生成View ID
-     */
-    public static int generateViewId() {
-      if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1) {
-        for (; ; ) {
-          final int result = sNextGeneratedId.get();
-          // aapt-generated IDs have the high byte nonzero; clamp to the range under that.
-          int newValue = result + 1;
-          if (newValue > 0x00FFFFFF) newValue = 1; // Roll over to 1, not 0.
-          if (sNextGeneratedId.compareAndSet(result, newValue)) {
-            return result;
-          }
-        }
-      } else {
-        return View.generateViewId();
-      }
     }
   }
 
